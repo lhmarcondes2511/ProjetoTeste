@@ -1,0 +1,77 @@
+﻿@model IEnumerable<ProjetoTeste.Models.Listas>
+
+@{
+    ViewData["Title"] = "Lista";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-success" id="AddLista">Adicionar Lista</a>
+</p>
+<center>
+
+    @using (Html.BeginForm()) {
+        <p id="intro">
+            Para fazer a adição na lista, precisa primeiramente cadastrar os produtos, depois cadastrar os clientes relacionando com os produtos criados. Abaixo, você pode procurar todos os dados sendo filtrados por Nome, CPF ou Email, tudo baseado pelo Cliente, basta escolher um filtro ou todos
+        </p>
+        <br />
+        <form action="/" method="post">
+            <div class="form-group col-lg-3">
+                @Html.TextBox("nome", null, new { @class = "form-control", @placeholder = "Nome do Cliente" })
+            </div>
+            <div class="form-group col-lg-3">
+                @Html.TextBox("email", null, new { @class = "form-control", @placeholder = "Email" })
+            </div>
+            <div class="form-group col-lg-3">
+                @Html.TextBox("cpf", null, new { @class = "form-control", @placeholder = "CPF" })
+            </div>
+            <div class="col-lg-3">
+                <input type="submit" name="submit" class="btn-lg btn btn-outline-success" value="Filtrar" />
+            </div>
+        </form>
+    }
+</center>
+
+
+<table class="table" id="filtragem">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Cliente.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Cliente.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Cliente.Cpf)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Produto)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Cliente.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Cliente.Email)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Cliente.Cpf)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Produto.Nome)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary">Editar</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-warning">Detalhes</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Remover</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
