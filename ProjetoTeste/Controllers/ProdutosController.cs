@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ProjetoTeste.Models;
 
@@ -48,11 +49,10 @@ namespace ProjetoTeste.Controllers {
             return View(produto);
         }
 
-        public async Task<IActionResult> Edit(int? id) {
+        public async Task<IActionResult> Edit(int id) {
             if (id == null) {
                 return NotFound();
             }
-
             var produto = await _context.Produtos.FindAsync(id);
             if (produto == null) {
                 return NotFound();
@@ -62,15 +62,17 @@ namespace ProjetoTeste.Controllers {
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Ativo,Inserido")] Produto produto) {
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Ativo")] Produto produto) {
             if (id != produto.Id) {
                 return NotFound();
             }
-
             if (ModelState.IsValid) {
                 try {
-                    _context.Update(produto);
-                    await _context.SaveChangesAsync();
+                    if (VerificarProduto(id) == 1) {
+                        _context.Update(produto);
+                        await _context.SaveChangesAsync();
+                        ProdutoInserido(produto, 1);
+                    }
                 } catch (DbUpdateConcurrencyException) {
                     if (!ProdutoExists(produto.Id)) {
                         return NotFound();
@@ -88,8 +90,7 @@ namespace ProjetoTeste.Controllers {
                 return NotFound();
             }
 
-            var produto = await _context.Produtos
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var produto = await _context.Produtos.FirstOrDefaultAsync(m => m.Id == id);
             if (produto == null) {
                 return NotFound();
             }
@@ -113,6 +114,35 @@ namespace ProjetoTeste.Controllers {
 
         private bool ProdutoExists(int id) {
             return _context.Produtos.Any(e => e.Id == id);
+        }
+
+        public int VerificarProduto(int id) {
+            var connection = @"Server=(localdb)\mssqllocaldb;Database=lksmarcondes;Trusted_Connection=True;";
+            int result = 0;
+            using (SqlConnection conn = new SqlConnection(connection)) {
+                conn.Open();
+                using (SqlCommand command = new SqlCommand("", conn)) {
+                    command.CommandText = "select count(*) from Listas where ProdutoId = @id;";
+                    command.Parameters.AddWithValue("@id", id);
+                    result = (int)command.ExecuteScalar();
+                    command.Dispose();
+                }
+            }
+            return result;
+        }
+
+        public void ProdutoInserido(Produto produto, int i) {
+            var connection = @"Server=(localdb)\mssqllocaldb;Database=lksmarcondes;Trusted_Connection=True;";
+            using (SqlConnection conn = new SqlConnection(connection)) {
+                conn.Open();
+                using (SqlCommand command = new SqlCommand("", conn)) {
+                    command.CommandText = $"update Produtos set Inserido = @i where id = @id;";
+                    command.Parameters.AddWithValue("@i", i);
+                    command.Parameters.AddWithValue("@id", produto.Id);
+                    command.ExecuteNonQuery();
+                    command.Dispose();
+                }
+            }
         }
     }
 }

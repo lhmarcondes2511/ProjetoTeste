@@ -17,19 +17,19 @@ namespace ProjetoTeste.Controllers {
         }
 
         public async Task<IActionResult> Index(string nome, string cpf, string email) {
-            var lksMarcondesDbContext = _context.Listas.Include(l => l.Cliente).Include(l => l.Produto).Where(x => x.Produto.Ativo != false);
+            var lista = _context.Listas.Include(l => l.Cliente).Include(l => l.Produto).Where(x => x.Produto.Ativo != false);
 
             if (!String.IsNullOrEmpty(nome)) {
-                lksMarcondesDbContext = lksMarcondesDbContext.Where(x => x.Cliente.Nome.ToLower().Contains(nome.ToLower()));
+                lista = lista.Where(x => x.Cliente.Nome.ToLower().Contains(nome.ToLower()));
             }
             if (!String.IsNullOrEmpty(cpf)) {
-                lksMarcondesDbContext = lksMarcondesDbContext.Where(x => x.Cliente.Cpf.Contains(cpf));
+                lista = lista.Where(x => x.Cliente.Cpf.Contains(cpf));
             }
             if (!String.IsNullOrEmpty(email)) {
-                lksMarcondesDbContext = lksMarcondesDbContext.Where(x => x.Cliente.Email.ToLower().Contains(email.ToLower()));
+                lista = lista.Where(x => x.Cliente.Email.ToLower().Contains(email.ToLower()));
             }
             
-            return View(await lksMarcondesDbContext.ToListAsync());
+            return View(await lista.ToListAsync());
         }
 
         public async Task<IActionResult> Details(int? id) {
@@ -86,7 +86,6 @@ namespace ProjetoTeste.Controllers {
             if (id != listas.Id) {
                 return NotFound();
             }
-
             if (ModelState.IsValid) {
                 try {
                     ProdutoInserido(listas, 1);
@@ -104,6 +103,7 @@ namespace ProjetoTeste.Controllers {
             ViewData["ClienteNome"] = new SelectList(_context.Clientes, "Id", "Nome", listas.ClienteId);
             ViewData["ProdutoNome"] = new SelectList(_context.Produtos, "Id", "Nome", listas.ProdutoId);
             return View(listas);
+
         }
 
         public async Task<IActionResult> Delete(int? id) {
@@ -124,15 +124,22 @@ namespace ProjetoTeste.Controllers {
         public async Task<IActionResult> DeleteConfirmed(int id) {
             ViewBag.Message = null;
             var listas = await _context.Listas.FindAsync(id);
+            var cliente = await _context.Clientes.FindAsync(listas.ClienteId);
             if (MinimoCliente(listas.ClienteId) == 1) {
                 ViewBag.Message = string.Format("O Cliente precisa ter no minimo um produto");
                 var lista = await _context.Listas.Include(l => l.Cliente).Include(l => l.Produto).FirstOrDefaultAsync(m => m.Id == id);
                 if (lista == null) {
                     return NotFound();
                 }
-
                 return View(lista);
-            } else {
+            } else if (listas.ProdutoId == cliente.ProdutoId) {
+                ViewBag.Message = string.Format("Nao pode excluir a lista onde o produto e o padrao do cliente");
+                var lista = await _context.Listas.Include(l => l.Cliente).Include(l => l.Produto).FirstOrDefaultAsync(m => m.Id == id);
+                if (lista == null) {
+                    return NotFound();
+                }
+                return View(lista);
+            } else { 
                 _context.Remove(listas);
                 ProdutoInserido(listas, 0);
                 await _context.SaveChangesAsync();

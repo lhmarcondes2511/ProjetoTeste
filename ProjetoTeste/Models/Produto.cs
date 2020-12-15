@@ -18,10 +18,11 @@ namespace ProjetoTeste.Models {
         public Produto() {
         }
 
-        public Produto(int id, string nome, bool ativo) {
+        public Produto(int id, string nome, bool ativo, bool inserido) {
             Id = id;
             Nome = nome;
             Ativo = ativo;
+            Inserido = inserido;
         }
     }
 }

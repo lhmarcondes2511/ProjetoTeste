@@ -17,8 +17,8 @@ namespace ProjetoTeste.Controllers {
         }
 
         public async Task<IActionResult> Index() {
-            var lksMarcondesDbContext = _context.Clientes.Include(c => c.Produto);
-            return View(await lksMarcondesDbContext.ToListAsync());
+            var cliente = _context.Clientes.Include(c => c.Produto);
+            return View(await cliente.ToListAsync());
         }
 
         public async Task<IActionResult> Details(int? id) {
@@ -140,7 +140,6 @@ namespace ProjetoTeste.Controllers {
                     } else {
                         return 0;
                     }
-                    command.Dispose();
                 }
             }
         }
@@ -215,6 +214,22 @@ namespace ProjetoTeste.Controllers {
                     command.Dispose();
                 }
             }
+        }
+
+
+        public int MinimoCliente(int clienteId) {
+            var connection = @"Server=(localdb)\mssqllocaldb;Database=lksmarcondes;Trusted_Connection=True;";
+            var result = 0;
+            using (SqlConnection conn = new SqlConnection(connection)) {
+                conn.Open();
+                using (SqlCommand command = new SqlCommand("", conn)) {
+                    command.CommandText = "select COUNT(*) from Listas where ClienteId = @id;";
+                    command.Parameters.AddWithValue("@id", clienteId);
+                    result = (int)command.ExecuteScalar();
+                    command.Dispose();
+                }
+            }
+            return result;
         }
 
         public void ProdutoInserido(Cliente cliente, int i) {
